@@ -2,9 +2,9 @@
 
 ### Required environment variables to run:
 
-EMAIL
-API_KEY
-ZONE_ID
+EMAIL\
+API_KEY\
+ZONE_ID\
 FQDN
 
 ### Example docker command to build:
