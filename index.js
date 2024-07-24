@@ -42,9 +42,9 @@ class DNSHandler {
         cache: "no-cache",
       }
     )
+      .catch((err) => console.log(err))
       .then((resp) => resp.json())
       .then((resp) => {
-        console.log(resp);
         return {
           record_id: resp.result[0].id,
           record_ip: resp.result[0].content,
@@ -52,27 +52,38 @@ class DNSHandler {
       });
   }
 
-  async updateRecord(record_id, new_ip) {
-    fetch(
-      `https://api.cloudflare.com/client/v4/zones/${this.zoneID}/dns_records/${record_id}`,
-      {
-        method: "PATCH",
-        headers: this.requestHeaders,
-        body: JSON.stringify({
-          content: new_ip,
-          name: this.fqdn,
-          type: "A",
-          id: record_id,
-        }),
-      }
-    ).then((resp) => console.log(resp.status));
+  async updateRecord(record_id, record_ip, new_ip) {
+    if (record_ip != new_ip) {
+      console.log(
+        `The current DNS record and public IP do not match. Updating to ${new_ip}.`
+      );
+      fetch(
+        `https://api.cloudflare.com/client/v4/zones/${this.zoneID}/dns_records/${record_id}`,
+        {
+          method: "PATCH",
+          headers: this.requestHeaders,
+          body: JSON.stringify({
+            content: new_ip,
+            name: this.fqdn,
+            type: "A",
+            id: record_id,
+          }),
+        }
+      )
+        .catch((err) => console.log(err))
+        .then((resp) => console.log(resp.status));
+    } else {
+      console.log(
+        "The current DNS record IP is the same as the public IP. Record will not be updated."
+      );
+    }
   }
 
   async run() {
     const publicIP = await app.getPublicIP();
     console.log(`My Public IP: ${publicIP}`);
-    const recordData = await app.getRecordID();
-    await app.updateRecord(recordData.record_id, publicIP);
+    const { record_id, record_ip } = await app.getRecordID();
+    await app.updateRecord(record_id, record_ip, publicIP);
   }
 }
 
